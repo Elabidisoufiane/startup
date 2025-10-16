@@ -1,0 +1,67 @@
+-- -----------------------------------------------------
+-- Database: Quiz Management System
+-- Use this script to create the necessary tables in your local MySQL instance.
+-- -----------------------------------------------------
+
+-- 1. Quizzes Table (The main quiz set)
+CREATE TABLE Quizzes (
+    QuizID INT PRIMARY KEY AUTO_INCREMENT,
+    CreatorUserID VARCHAR(255) NOT NULL, -- The user ID of the quiz creator
+    Title VARCHAR(255) NOT NULL,         -- e.g., 'Injection Molding Quiz'
+    Access_Code VARCHAR(50) UNIQUE NOT NULL, -- The unique code for participants
+    Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. SubQuizzes Table (Modules within the quiz)
+CREATE TABLE SubQuizzes (
+    SubQuizID INT PRIMARY KEY AUTO_INCREMENT,
+    QuizID INT NOT NULL,
+    Title VARCHAR(255) NOT NULL,       -- e.g., 'Material Knowledge Quiz'
+    Order_Index INT NOT NULL,
+    FOREIGN KEY (QuizID) REFERENCES Quizzes(QuizID) ON DELETE CASCADE
+);
+
+-- 3. Questions Table
+CREATE TABLE Questions (
+    QuestionID INT PRIMARY KEY AUTO_INCREMENT,
+    SubQuizID INT NOT NULL,
+    Question_Text TEXT NOT NULL,
+    -- Question_Type allows for different scoring methods
+    Question_Type ENUM('SINGLE_CHOICE', 'MULTI_SELECT', 'OPEN_TEXT') NOT NULL,
+    Points INT DEFAULT 1,
+    Order_Index INT NOT NULL,
+    FOREIGN KEY (SubQuizID) REFERENCES SubQuizzes(SubQuizID) ON DELETE CASCADE
+);
+
+-- 4. Choices Table (The options for multiple-choice questions)
+CREATE TABLE Choices (
+    ChoiceID INT PRIMARY KEY AUTO_INCREMENT,
+    QuestionID INT NOT NULL,
+    Choice_Text VARCHAR(500) NOT NULL,
+    Is_Correct BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (QuestionID) REFERENCES Questions(QuestionID) ON DELETE CASCADE
+);
+
+-- 5. QuizTakers Table (Participants' details)
+CREATE TABLE QuizTakers (
+    TakerID INT PRIMARY KEY AUTO_INCREMENT,
+    QuizID INT NOT NULL,
+    Taker_Name VARCHAR(255) NOT NULL,
+    Started_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Completed_At DATETIME,
+    Total_Score DECIMAL(5,2) DEFAULT 0.0,
+    FOREIGN KEY (QuizID) REFERENCES Quizzes(QuizID) ON DELETE CASCADE
+);
+
+-- 6. Answers Table (Individual answers and scores)
+CREATE TABLE Answers (
+    AnswerID INT PRIMARY KEY AUTO_INCREMENT,
+    TakerID INT NOT NULL,
+    QuestionID INT NOT NULL,
+    -- Stores the selected Choice IDs (or JSON for multi-select/text for open)
+    Submitted_Answer TEXT,
+    Is_Correct BOOLEAN,
+    Score_Achieved DECIMAL(5,2),
+    FOREIGN KEY (TakerID) REFERENCES QuizTakers(TakerID) ON DELETE CASCADE,
+    FOREIGN KEY (QuestionID) REFERENCES Questions(QuestionID) ON DELETE CASCADE
+);
